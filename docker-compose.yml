@@ -1,0 +1,76 @@
+version: '3.8'
+services:
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+      - redis
+
+  # Frontend (Next.js)
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    env_file:
+      - ./frontend/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  # MongoDB
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # Redis
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Waha Instances (contoh 2, bisa ditambah sesuai kebutuhan)
+  waha1:
+    build: ./waha
+    container_name: waha1
+    restart: always
+    env_file:
+      - ./waha/.env.waha1
+    ports:
+      - "3001:3000"
+    depends_on:
+      - redis
+  
+
+  # Nginx Reverse Proxy (opsional)
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  mongo_data:
+  redis_data:
